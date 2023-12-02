@@ -65,7 +65,7 @@ async function run() {
 
     // payment
 
-    app.get("/payments/:email", verifyToken, async (req, res) => {
+    app.get("/payments/:email",  async (req, res) => {
       const query = { email: req.params.email };
       if (req.params.email !== req.decoded.email) {
         return res.status(403).send({ message: "forbidden access" });
@@ -141,7 +141,7 @@ async function run() {
       }
     });
 
-    app.delete("/users/:id", verifyToken, async (req, res) => {
+    app.delete("/users/:id",  async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await userCollection.deleteOne(query);
@@ -150,7 +150,7 @@ async function run() {
 
     app.patch(
       "/users/admin/:id",
-      verifyToken,
+      
 
       async (req, res) => {
         const id = req.params.id;
@@ -203,7 +203,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/posts", async (req, res) => {
+    app.post("/posts",  async (req, res) => {
       const post = req.body;
       //   console.log(post);
       const result = await postsCollection.insertOne(post);
