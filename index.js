@@ -26,7 +26,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
 
     const reportCollection = client.db("platformDB").collection("reports");
     const postsCollection = client.db("platformDB").collection("posts");
@@ -65,7 +65,7 @@ async function run() {
 
     // payment
 
-    app.get("/payments/:email",  async (req, res) => {
+    app.get("/payments/:email", verifyToken, async (req, res) => {
       const query = { email: req.params.email };
       if (req.params.email !== req.decoded.email) {
         return res.status(403).send({ message: "forbidden access" });
@@ -141,7 +141,7 @@ async function run() {
       }
     });
 
-    app.delete("/users/:id",  async (req, res) => {
+    app.delete("/users/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await userCollection.deleteOne(query);
@@ -150,7 +150,6 @@ async function run() {
 
     app.patch(
       "/users/admin/:id",
-      
 
       async (req, res) => {
         const id = req.params.id;
@@ -182,17 +181,23 @@ async function run() {
 
     app.get("/posts", async (req, res) => {
       try {
-        const filter = req.query;
-        console.log(filter);
-        const query = {
-          tags: { $regex: filter.search, $options: "i" },
-        };
-        console.log(query);
+        const { search } = req.query;
+        let query = {};
 
+        // Check if search query parameter exists
+        if (search && typeof search === "string") {
+          // Use regex to perform a case-insensitive search on the 'title' field
+          query = {
+            title: { $regex: search, $options: "i" },
+          };
+        }
+
+        // Find posts that match the query
         const result = await postsCollection.find(query).toArray();
         res.send(result);
       } catch (error) {
         console.log(error);
+        res.status(500).send("Error fetching posts");
       }
     });
 
@@ -203,7 +208,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/posts",  async (req, res) => {
+    app.post("/posts", async (req, res) => {
       const post = req.body;
       //   console.log(post);
       const result = await postsCollection.insertOne(post);
@@ -307,10 +312,10 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
-    // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!"
-    // );
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
